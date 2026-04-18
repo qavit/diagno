@@ -6,11 +6,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/questions": "http://127.0.0.1:8000",
-      "/attempt": "http://127.0.0.1:8000",
-      "/next-question": "http://127.0.0.1:8000",
-      "/stats": "http://127.0.0.1:8000",
-      "/metadata": "http://127.0.0.1:8000",
+      "/questions": "http://app:8000",
+      "/attempt": "http://app:8000",
+      "/next-question": "http://app:8000",
+      "/stats": "http://app:8000",
+      "/metadata": "http://app:8000",
     },
   },
   test: {

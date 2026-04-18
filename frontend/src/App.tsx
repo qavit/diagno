@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getMetadata, getNextQuestion, getQuestion, getStats, submitAttempt } from "./lib/api";
 import { buildHintTrack, translate } from "./lib/format";
 import type { AttemptResponse, Lang, MetadataResponse, Question, StatsResponse } from "./lib/types";
-import { DiagnosisPanel, HeroHeader, QuestionWorkspace, StudentModelPanel, TeacherSnapshot } from "./components";
+import { DiagnosisPanel, HeroHeader, QuestionWorkspace, InsightDrawer } from "./components";
 
 export function App() {
   const [lang, setLang] = useState<Lang>("en");
@@ -13,6 +13,7 @@ export function App() {
   const [diagnosis, setDiagnosis] = useState<AttemptResponse | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [hintCursor, setHintCursor] = useState(0);
+  const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [loadingState, setLoadingState] = useState({ metadata: false, question: false, submit: false });
 
   const hintTrack = useMemo(
@@ -32,7 +33,6 @@ export function App() {
       setMetadata(metadataResponse);
       setStats(statsResponse);
       document.documentElement.lang = nextLang;
-      document.title = metadataResponse.ui.app_title ?? "diagno";
     } finally {
       setLoadingState((current) => ({ ...current, metadata: false }));
     }
@@ -52,9 +52,7 @@ export function App() {
   }
 
   async function handleSubmit() {
-    if (!selectedAnswer || !question) {
-      return;
-    }
+    if (!selectedAnswer || !question) return;
     setLoadingState((current) => ({ ...current, submit: true }));
     try {
       const response = await submitAttempt(
@@ -71,9 +69,7 @@ export function App() {
   }
 
   async function handleNextQuestion() {
-    if (!question) {
-      return;
-    }
+    if (!question) return;
     const nextQuestion = diagnosis?.errors[0]
       ? await getNextQuestion({ currentQuestionId: question.id, lang, errorType: diagnosis.errors[0].id })
       : diagnosis?.recommended_next_question_id
@@ -95,7 +91,7 @@ export function App() {
         onLangChange={setLang}
       />
 
-      <section className="workspace-grid">
+      <div className="chat-container">
         <QuestionWorkspace
           metadata={metadata}
           question={question}
@@ -105,6 +101,7 @@ export function App() {
           onSubmit={() => void handleSubmit()}
           onNextQuestion={() => void handleNextQuestion()}
         />
+
         <DiagnosisPanel
           metadata={metadata}
           diagnosis={diagnosis}
@@ -112,15 +109,30 @@ export function App() {
           flatHints={hintTrack}
           onShowHint={() => setHintCursor((current) => Math.min(current + 1, hintTrack.length))}
         />
-      </section>
+      </div>
 
-      <section className="insight-grid">
-        <StudentModelPanel metadata={metadata} studentModel={diagnosis?.student_model ?? null} />
-        <TeacherSnapshot metadata={metadata} stats={stats} lang={lang} />
-      </section>
+      <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        <button 
+          className="btn btn-ghost" 
+          style={{ width: '100%', marginBottom: '1rem' }}
+          onClick={() => setIsInsightOpen(!isInsightOpen)}
+        >
+          {isInsightOpen ? "Close Insights" : "Show Student Mastery & Teacher Stats"}
+        </button>
+        {isInsightOpen && (
+          <InsightDrawer 
+            metadata={metadata} 
+            studentModel={diagnosis?.student_model ?? (stats?.concept_mastery_by_student[studentId] || null)}
+            stats={stats}
+            lang={lang}
+          />
+        )}
+      </div>
 
       {(loadingState.metadata || loadingState.question) && (
-        <div className="loading-banner">{translate(metadata, "loading")}</div>
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '999px', boxShadow: 'var(--shadow-md)' }}>
+          {translate(metadata, "loading")}
+        </div>
       )}
     </main>
   );
