@@ -42,11 +42,14 @@ export function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastQuestionId = useRef<string | null>(null);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages, isThinking, previewDiagnosis]);
 
   // Handle scroll events to show/hide "Jump to bottom"
@@ -57,7 +60,7 @@ export function App() {
   };
 
   const jumpToBottom = () => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Handle Drag Resizing
@@ -209,12 +212,18 @@ export function App() {
     }
   }
 
+  const gridColumns = useMemo(() => {
+    const cols = [];
+    if (!leftCollapsed) cols.push(`${leftWidth}px`, '4px');
+    cols.push('1fr');
+    if (!rightCollapsed) cols.push('4px', `${rightWidth}px`);
+    return cols.join(' ');
+  }, [leftWidth, rightWidth, leftCollapsed, rightCollapsed]);
+
   return (
     <div 
       className="app-container"
-      style={{
-        gridTemplateColumns: `${leftCollapsed ? 0 : leftWidth}px auto 1fr auto ${rightCollapsed ? 0 : rightWidth}px`
-      }}
+      style={{ gridTemplateColumns: gridColumns }}
     >
       {/* Column 1: Pulse (Nav & Mastery) */}
       {!leftCollapsed && (
@@ -230,22 +239,24 @@ export function App() {
       )}
 
       {/* Left Splitter */}
-      <div 
-        className={`splitter ${draggingPane === 'left' ? 'dragging' : ''}`}
-        onMouseDown={() => setDraggingPane('left')}
-        onDoubleClick={() => setLeftCollapsed(!leftCollapsed)}
-      />
+      {!leftCollapsed && (
+        <div 
+          className={`splitter ${draggingPane === 'left' ? 'dragging' : ''}`}
+          onMouseDown={() => setDraggingPane('left')}
+          onDoubleClick={() => setLeftCollapsed(true)}
+        />
+      )}
 
       {/* Column 2: The Stage (Persistent Problem) */}
       <main className="column-stage">
         <div className="panel-header">
           <div className="stage-title">Current Challenge</div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="toggle-btn" onClick={() => setLeftCollapsed(!leftCollapsed)}>
-              {leftCollapsed ? '▶ Pulse' : '◀ Collapse'}
+            <button className="toggle-btn" onClick={() => setLeftCollapsed(!leftCollapsed)} title="Toggle Left Sidebar" style={{ padding: '0.25rem 0.5rem', display: 'flex' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
             </button>
-            <button className="toggle-btn" onClick={() => setRightCollapsed(!rightCollapsed)}>
-              {rightCollapsed ? 'Tutor ◀' : 'Collapse ▶'}
+            <button className="toggle-btn" onClick={() => setRightCollapsed(!rightCollapsed)} title="Toggle Right Sidebar" style={{ padding: '0.25rem 0.5rem', display: 'flex' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
             </button>
           </div>
         </div>
@@ -279,11 +290,13 @@ export function App() {
       </main>
 
       {/* Right Splitter */}
-      <div 
-        className={`splitter ${draggingPane === 'right' ? 'dragging' : ''}`}
-        onMouseDown={() => setDraggingPane('right')}
-        onDoubleClick={() => setRightCollapsed(!rightCollapsed)}
-      />
+      {!rightCollapsed && (
+        <div 
+          className={`splitter ${draggingPane === 'right' ? 'dragging' : ''}`}
+          onMouseDown={() => setDraggingPane('right')}
+          onDoubleClick={() => setRightCollapsed(true)}
+        />
+      )}
 
       {/* Column 3: The Tutor (Feedback & Interaction) */}
       {!rightCollapsed && (
@@ -297,6 +310,7 @@ export function App() {
             {messages.map(m => (
               <ChatMessage key={m.id} role={m.role} content={m.content} isMath={m.isMath} timestamp={m.timestamp} />
             ))}
+            <div ref={messagesEndRef} style={{ height: 1 }} />
           </div>
 
           <button 
