@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnostic Physics Tutor MVP</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel hero">
+        <div>
+          <p class="eyebrow" id="hero-eyebrow">Diagnostic Physics Tutor</p>
+          <h1 id="hero-title">Angular Momentum + Center of Mass</h1>
+          <p class="subtle" id="hero-description">
+            Rule-based diagnosis for binary-system mistakes. The engine maps answers to likely failures in reading, modeling, vectors, concepts, and algebra.
+          </p>
+        </div>
+        <div class="hero-controls">
+          <div class="language-bar">
+            <label for="language-select" id="language-label">Language</label>
+            <select id="language-select">
+              <option value="en">English</option>
+              <option value="zh-TW">繁體中文</option>
+            </select>
+          </div>
+          <div class="student-bar">
+            <label for="student-id" id="student-label">Student</label>
+            <input id="student-id" value="demo-student" />
+          </div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <article class="panel question-panel">
+          <div class="question-header">
+            <p class="eyebrow" id="question-tag">Question</p>
+            <button id="next-question" class="secondary">Next Question</button>
+          </div>
+          <h2 id="question-title">Loading...</h2>
+          <div id="question-options" class="options"></div>
+          <button id="submit-answer" class="primary">Submit Answer</button>
+        </article>
+
+        <aside class="panel diagnosis-panel">
+          <h3 id="diagnosis-title">Diagnosis</h3>
+          <div id="result-status" class="result-card muted">Submit an answer to see diagnosis.</div>
+          <div id="error-list" class="stack"></div>
+          <div class="hint-controls">
+            <button id="show-hint" class="secondary" disabled>Show Next Hint</button>
+          </div>
+          <div id="hint-box" class="stack"></div>
+        </aside>
+      </section>
+
+      <section class="layout">
+        <article class="panel mastery-panel">
+          <h3 id="student-model-title">Student Model</h3>
+          <div id="mastery-list" class="stack"></div>
+        </article>
+        <article class="panel teacher-panel">
+          <h3 id="teacher-view-title">Teacher View</h3>
+          <div id="stats-summary" class="stack"></div>
+          <div id="stats-errors" class="stack"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
