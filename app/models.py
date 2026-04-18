@@ -41,7 +41,7 @@ class Question(BaseModel):
     correct_answer: str
     concepts: list[str]
     error_map: dict[str, list[str]] = Field(default_factory=dict)
-    difficulty: int
+    difficulty: int = 1
     next_rules: dict[str, str] = Field(default_factory=dict)
 
 

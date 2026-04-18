@@ -14,20 +14,24 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Prevent Python from writing .pyc files and enable unbuffered logging
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install backend dependencies first (to utilize Docker cache)
+# Install backend dependencies first
 COPY pyproject.toml ./
-# Create a dummy app directory so pip install . can resolve dependencies
-RUN mkdir app && touch app/__init__.py && pip install --no-cache-dir .
+RUN mkdir app && touch app/__init__.py && uv pip install --system --no-cache .
 
-# Copy the actual backend code
+# Copy backend code and scripts
 COPY app/ ./app
+COPY tools/ ./tools
+COPY entrypoint.sh ./
 
-# Re-install to ensure the real app package is linked (fast as dependencies are cached)
-RUN pip install --no-cache-dir .
+# Create necessary directories
+RUN mkdir -p data wisdom && chmod +x entrypoint.sh
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /build/frontend/dist ./frontend/dist
@@ -35,5 +39,5 @@ COPY --from=frontend-builder /build/frontend/dist ./frontend/dist
 # Expose the port FastAPI runs on
 EXPOSE 8000
 
-# Start the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use the entrypoint script to start both watcher and app
+CMD ["./entrypoint.sh"]

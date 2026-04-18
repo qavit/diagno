@@ -3,5 +3,10 @@ services:
     build: .
     ports:
       - "8080:8000"
+    volumes:
+      - ./data:/app/data
+      - ./wisdom:/app/wisdom
+    env_file:
+      - .env
     restart: always
     container_name: diagno-app

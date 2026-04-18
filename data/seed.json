@@ -1,0 +1,776 @@
+{
+  "concepts": [
+    {
+      "id": "com_ratio",
+      "name": "Center of mass distance relation",
+      "description": "For two masses on a line, distances from the center of mass satisfy $m_1 r_1 = m_2 r_2$."
+    },
+    {
+      "id": "omega_to_v",
+      "name": "Tangential speed from angular speed",
+      "description": "In circular motion, tangential speed is $v = \\omega r$."
+    },
+    {
+      "id": "com_frame_momentum",
+      "name": "Momentum in the center-of-mass frame",
+      "description": "Total momentum is zero in the center-of-mass frame, so $p_{\\text{total}} = 0$."
+    },
+    {
+      "id": "single_particle_L",
+      "name": "Angular momentum of one particle",
+      "description": "Magnitude is $L = r_\\perp p = mvr$ for perpendicular velocity."
+    },
+    {
+      "id": "multi_body_L",
+      "name": "Total angular momentum of a system",
+      "description": "Total angular momentum is the sum of contributions from all bodies, so $L_{\\text{total}} = \\sum_i L_i$."
+    },
+    {
+      "id": "binary_system_modeling",
+      "name": "Binary system modeling",
+      "description": "Combine center-of-mass geometry, circular motion, momentum, and angular momentum consistently."
+    }
+  ],
+  "error_types": [
+    {
+      "id": "ignore_reference_frame",
+      "name": "Ignored the reference frame",
+      "description": "The student did not apply the center-of-mass frame condition when evaluating total momentum.",
+      "category": "reading",
+      "hint_levels": [
+        "What reference frame does the problem specify?",
+        "In the center-of-mass frame, what is the total momentum of the whole system?",
+        "That frame forces the vector sum of all momenta to be zero."
+      ]
+    },
+    {
+      "id": "incorrect_center_of_mass_relation",
+      "name": "Reversed center-of-mass relation",
+      "description": "The student swapped which mass should be farther from the center of mass.",
+      "category": "concept",
+      "hint_levels": [
+        "Which mass should sit closer to the center of mass: the heavier one or the lighter one?",
+        "Use $m_1 r_1 = m_2 r_2$ before substituting numbers.",
+        "For masses $m$ and $5m$, the lighter mass must be five times farther from the center of mass."
+      ]
+    },
+    {
+      "id": "wrong_omega_radius_link",
+      "name": "Incorrect use of $v = \\omega r$",
+      "description": "The student did not connect angular speed and radius correctly.",
+      "category": "concept",
+      "hint_levels": [
+        "For uniform circular motion, how is tangential speed related to angular speed?",
+        "Each body has its own radius from the center of mass, so each speed is $\\omega$ times that radius.",
+        "Compute $v_1 = \\omega r_1$ and $v_2 = \\omega r_2$ before finding momentum or angular momentum."
+      ]
+    },
+    {
+      "id": "missing_component",
+      "name": "Missing body contribution",
+      "description": "The student only accounted for one body when summing total angular momentum.",
+      "category": "modeling",
+      "hint_levels": [
+        "How many masses are orbiting in the system?",
+        "Write one angular momentum term for each body around the same origin.",
+        "The total angular momentum is $L_1 + L_2$, not just one term."
+      ]
+    },
+    {
+      "id": "vector_direction_error",
+      "name": "Momentum direction mistake",
+      "description": "The student treated opposite momenta as if they pointed in the same direction.",
+      "category": "vector",
+      "hint_levels": [
+        "Are the two linear momenta in the same direction or opposite directions in the center-of-mass frame?",
+        "Total momentum is a vector sum, so sign or direction matters before taking magnitudes.",
+        "The two bodies carry equal-magnitude opposite momenta in the center-of-mass frame."
+      ]
+    },
+    {
+      "id": "algebra_error",
+      "name": "Algebra or arithmetic error",
+      "description": "The student used the right structure but simplified or computed incorrectly.",
+      "category": "algebra",
+      "hint_levels": [
+        "Your setup may be right. Recheck the substitution and simplification carefully.",
+        "Keep common factors such as $m$, $d$, and $\\omega$ symbolic until the last step.",
+        "After combining terms, the coefficient should simplify cleanly without changing the physical structure."
+      ]
+    },
+    {
+      "id": "partial_system_model",
+      "name": "Partial system model",
+      "description": "The student answered only one requested quantity or failed to combine the momentum and angular momentum parts.",
+      "category": "modeling",
+      "hint_levels": [
+        "Does the problem ask for one quantity or more than one?",
+        "Separate the task into geometry, momentum, and angular momentum before combining the results.",
+        "State total momentum first, then compute total angular momentum using both bodies."
+      ]
+    },
+    {
+      "id": "momentum_only_error",
+      "name": "只有記到動量",
+      "description": "學生混淆了動量 (p=mv) 與角動量 (L=mvr)。",
+      "category": "concept",
+      "hint_levels": [
+        "動量跟角動量有一字之差，差別在哪裡？",
+        "角動量的定義是位置向量與動量向量的外積。"
+      ]
+    },
+    {
+      "id": "v_omega_confusion",
+      "name": "速度與角速度混淆",
+      "description": "學生將切線速度的表達式誤認為角動量。",
+      "category": "concept",
+      "hint_levels": [
+        "$\\omega r$ 的單位是速度 (m/s)，角動量的單位應該包含質量、長度與時間。"
+      ]
+    },
+    {
+      "id": "error_misunderstand_com_0",
+      "name": "誤解質心坐標系動量",
+      "description": "學生可能受動量公式 $P = mv$ 影響，錯誤地認為質量比是動量比。",
+      "category": "concept",
+      "hint_levels": [
+        "提示 1: 想想看「質心坐標系」定義下的總動量應該是多少？",
+        "提示 2: 既然總動量是 0，代表兩者的動量向量之和必須為零。"
+      ]
+    },
+    {
+      "id": "error_inverse_misapply",
+      "name": "反比誤用",
+      "description": "學生錯誤地將反比性質應用於動量大小，而非速度。",
+      "category": "concept",
+      "hint_levels": [
+        "提示: 速度 $v$ 的確跟質量成反比，但動量 $P = mv$ 呢？"
+      ]
+    },
+    {
+      "id": "error_unfamiliar_com",
+      "name": "不熟悉質心坐標系",
+      "description": "學生對質心坐標系的不熟悉，導致他以為需要軌道幾何資訊。",
+      "category": "concept",
+      "hint_levels": [
+        "提示: 質心坐標系有一個強大的特性，跟軌道半徑無關。"
+      ]
+    },
+    {
+      "id": "wrong_formula",
+      "name": "公式記錯",
+      "description": "如果學生選 A，他可能記反了公式，或者是把 $v = \\omega r$ 以為是 $v = \\omega / r$。",
+      "category": "modeling",
+      "hint_levels": [
+        "想想看，在同樣的轉動時間內，外圈的人跑的路徑比較長還是內圈的人？",
+        "切線速度的公式是 $v = \\omega r$，當 $\\omega$ 相同時，$v$ 與 $r$ 是成正比還是反比？"
+      ]
+    },
+    {
+      "id": "square_misconception",
+      "name": "平方誤解",
+      "description": "如果學生選 C 或 D，他可能把「加速度」或「角速度平方」的關係帶進來了，或者是把 $r$ 給平方了（像是在帶萬有引力公式）。",
+      "category": "modeling",
+      "hint_levels": [
+        "這裡只問速度 (v)，不是加速度 (a)，不需要把半徑平方。"
+      ]
+    },
+    {
+      "id": "error_p_mv_vs_angular",
+      "name": "動量與角動量混淆",
+      "description": "學生只記到了「動量 (p=mv)」，卻忘記了「角」動量需要考慮到距離 (r)。",
+      "category": "concept",
+      "hint_levels": [
+        "動量跟角動量有一字之差，差別在哪裡？",
+        "角動量的定義是位置向量與動量向量的外積。"
+      ]
+    },
+    {
+      "id": "error_confused_with_angular_velocity",
+      "name": "角速度混淆",
+      "description": "學生可能跟角速度的公式搞混了，或者只是在亂湊單位。",
+      "category": "concept",
+      "hint_levels": []
+    },
+    {
+      "id": "error_misidentifying_velocity",
+      "name": "速度與角動量混淆",
+      "description": "選 D 的話，學生雖然想到了圓周運動，但 \\(\\omega r\\) 其實是速度 \\(v\\)，不是角動量。",
+      "category": "concept",
+      "hint_levels": [
+        "\\(\\omega r\\) 的單位是速度 (m/s)，角動量的單位應該包含質量、長度與時間。"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "statement": "Two masses $m$ and $5m$ are separated by distance $d$. In the center-of-mass frame, what are their distances from the center of mass?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$r_m = d/6$, $r_{5m} = 5d/6$"
+        },
+        {
+          "id": "B",
+          "text": "$r_m = 5d/6$, $r_{5m} = d/6$"
+        },
+        {
+          "id": "C",
+          "text": "$r_m = d/2$, $r_{5m} = d/2$"
+        },
+        {
+          "id": "D",
+          "text": "$r_m = 5d/4$, $r_{5m} = d/4$"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [
+        "com_ratio"
+      ],
+      "error_map": {
+        "A": [
+          "incorrect_center_of_mass_relation"
+        ],
+        "C": [
+          "incorrect_center_of_mass_relation"
+        ],
+        "D": [
+          "algebra_error"
+        ]
+      },
+      "difficulty": 1,
+      "next_rules": {
+        "incorrect_center_of_mass_relation": "q2",
+        "algebra_error": "q3"
+      }
+    },
+    {
+      "id": "q2",
+      "statement": "A mass moves in a circle of radius $r$ around the center of mass with angular speed $\\omega$. Which expression gives its speed?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$v = r/\\omega$"
+        },
+        {
+          "id": "B",
+          "text": "$v = \\omega/r$"
+        },
+        {
+          "id": "C",
+          "text": "$v = \\omega r$"
+        },
+        {
+          "id": "D",
+          "text": "$v = \\omega r^2$"
+        }
+      ],
+      "correct_answer": "C",
+      "concepts": [
+        "omega_to_v"
+      ],
+      "error_map": {
+        "A": [
+          "wrong_omega_radius_link"
+        ],
+        "B": [
+          "wrong_omega_radius_link"
+        ],
+        "D": [
+          "algebra_error"
+        ]
+      },
+      "difficulty": 1,
+      "next_rules": {
+        "wrong_omega_radius_link": "q3",
+        "algebra_error": "q4"
+      }
+    },
+    {
+      "id": "q3",
+      "statement": "In the center-of-mass frame of any isolated two-body system, what is the total momentum of the system?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Always zero"
+        },
+        {
+          "id": "B",
+          "text": "Equal to $mv$ of the lighter body"
+        },
+        {
+          "id": "C",
+          "text": "Equal to the sum of momentum magnitudes"
+        },
+        {
+          "id": "D",
+          "text": "Cannot be determined without the radii"
+        }
+      ],
+      "correct_answer": "A",
+      "concepts": [
+        "com_frame_momentum"
+      ],
+      "error_map": {
+        "B": [
+          "ignore_reference_frame",
+          "missing_component"
+        ],
+        "C": [
+          "ignore_reference_frame",
+          "vector_direction_error"
+        ],
+        "D": [
+          "ignore_reference_frame"
+        ]
+      },
+      "difficulty": 1,
+      "next_rules": {
+        "ignore_reference_frame": "q7",
+        "vector_direction_error": "q8",
+        "missing_component": "q9"
+      }
+    },
+    {
+      "id": "q4",
+      "statement": "A particle of mass $m$ moves perpendicular to the radius vector at speed $v$, at distance $r$ from the origin. What is the magnitude of its angular momentum about the origin?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$L = mvr$"
+        },
+        {
+          "id": "B",
+          "text": "$L = mv/r$"
+        },
+        {
+          "id": "C",
+          "text": "$L = mr/v$"
+        },
+        {
+          "id": "D",
+          "text": "$L = mv + r$"
+        }
+      ],
+      "correct_answer": "A",
+      "concepts": [
+        "single_particle_L"
+      ],
+      "error_map": {
+        "B": [
+          "algebra_error"
+        ],
+        "C": [
+          "algebra_error"
+        ],
+        "D": [
+          "wrong_omega_radius_link"
+        ]
+      },
+      "difficulty": 1,
+      "next_rules": {
+        "algebra_error": "q5",
+        "wrong_omega_radius_link": "q5"
+      }
+    },
+    {
+      "id": "q5",
+      "statement": "In a binary system, each body contributes angular momentum about the center of mass. Which expression matches the total angular momentum?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$L_{\\text{total}} = L_1$"
+        },
+        {
+          "id": "B",
+          "text": "$L_{\\text{total}} = L_1 + L_2$"
+        },
+        {
+          "id": "C",
+          "text": "$L_{\\text{total}} = L_1 - L_2$ because the bodies are on opposite sides"
+        },
+        {
+          "id": "D",
+          "text": "$L_{\\text{total}} = 0$ in the center-of-mass frame"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [
+        "multi_body_L"
+      ],
+      "error_map": {
+        "A": [
+          "missing_component"
+        ],
+        "C": [
+          "vector_direction_error"
+        ],
+        "D": [
+          "ignore_reference_frame"
+        ]
+      },
+      "difficulty": 2,
+      "next_rules": {
+        "missing_component": "q9",
+        "vector_direction_error": "q8",
+        "ignore_reference_frame": "q7"
+      }
+    },
+    {
+      "id": "q6",
+      "statement": "For masses $m$ and $5m$ separated by $d$ in circular motion about their center of mass, what are the speeds of the two masses?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$v_m = \\omega d/6$, $v_{5m} = 5\\omega d/6$"
+        },
+        {
+          "id": "B",
+          "text": "$v_m = 5\\omega d/6$, $v_{5m} = \\omega d/6$"
+        },
+        {
+          "id": "C",
+          "text": "$v_m = v_{5m} = \\omega d/2$"
+        },
+        {
+          "id": "D",
+          "text": "$v_m = 5\\omega d$, $v_{5m} = \\omega d$"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [
+        "com_ratio",
+        "omega_to_v"
+      ],
+      "error_map": {
+        "A": [
+          "incorrect_center_of_mass_relation",
+          "wrong_omega_radius_link"
+        ],
+        "C": [
+          "incorrect_center_of_mass_relation"
+        ],
+        "D": [
+          "algebra_error"
+        ]
+      },
+      "difficulty": 2,
+      "next_rules": {
+        "incorrect_center_of_mass_relation": "q1",
+        "wrong_omega_radius_link": "q2",
+        "algebra_error": "q10"
+      }
+    },
+    {
+      "id": "q7",
+      "statement": "Binary system: masses $m$ and $5m$ are separated by $d$ and rotate with angular speed $\\omega$ about their center of mass. What is the total momentum in the center-of-mass frame?",
+      "options": [
+        {
+          "id": "A",
+          "text": "0"
+        },
+        {
+          "id": "B",
+          "text": "$m\\omega d$"
+        },
+        {
+          "id": "C",
+          "text": "$5m\\omega d$"
+        },
+        {
+          "id": "D",
+          "text": "$m(5\\omega d/6) + 5m(\\omega d/6)$"
+        }
+      ],
+      "correct_answer": "A",
+      "concepts": [
+        "com_frame_momentum",
+        "omega_to_v",
+        "binary_system_modeling"
+      ],
+      "error_map": {
+        "B": [
+          "ignore_reference_frame",
+          "algebra_error"
+        ],
+        "C": [
+          "ignore_reference_frame",
+          "missing_component"
+        ],
+        "D": [
+          "ignore_reference_frame",
+          "vector_direction_error"
+        ]
+      },
+      "difficulty": 2,
+      "next_rules": {
+        "ignore_reference_frame": "q3",
+        "vector_direction_error": "q8",
+        "missing_component": "q9",
+        "algebra_error": "q10"
+      }
+    },
+    {
+      "id": "q8",
+      "statement": "Two bodies orbit the center of mass in opposite positions. Their momenta are equal in magnitude. How should those momenta combine for total momentum?",
+      "options": [
+        {
+          "id": "A",
+          "text": "They add because magnitudes are positive"
+        },
+        {
+          "id": "B",
+          "text": "They cancel because the vectors are opposite"
+        },
+        {
+          "id": "C",
+          "text": "The heavier one wins"
+        },
+        {
+          "id": "D",
+          "text": "They cancel only if the radii are equal"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [
+        "com_frame_momentum"
+      ],
+      "error_map": {
+        "A": [
+          "vector_direction_error"
+        ],
+        "C": [
+          "vector_direction_error",
+          "incorrect_center_of_mass_relation"
+        ],
+        "D": [
+          "ignore_reference_frame"
+        ]
+      },
+      "difficulty": 2,
+      "next_rules": {
+        "vector_direction_error": "q7",
+        "incorrect_center_of_mass_relation": "q1",
+        "ignore_reference_frame": "q3"
+      }
+    },
+    {
+      "id": "q9",
+      "statement": "A student computes the angular momentum of only the lighter mass in a binary system and stops. What is the diagnostic issue?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Missing the other body's contribution"
+        },
+        {
+          "id": "B",
+          "text": "Used the wrong reference frame"
+        },
+        {
+          "id": "C",
+          "text": "Arithmetic error only"
+        },
+        {
+          "id": "D",
+          "text": "No issue"
+        }
+      ],
+      "correct_answer": "A",
+      "concepts": [
+        "multi_body_L"
+      ],
+      "error_map": {
+        "B": [
+          "ignore_reference_frame"
+        ],
+        "C": [
+          "algebra_error"
+        ],
+        "D": [
+          "missing_component"
+        ]
+      },
+      "difficulty": 2,
+      "next_rules": {
+        "missing_component": "q5",
+        "ignore_reference_frame": "q3",
+        "algebra_error": "q10"
+      }
+    },
+    {
+      "id": "q10",
+      "statement": "Full problem: masses $m$ and $5m$ are separated by $d$ and rotate with angular speed $\\omega$. In the center-of-mass frame, what is the correct pair $(\\text{total momentum}, \\text{total angular momentum})$?",
+      "options": [
+        {
+          "id": "A",
+          "text": "$(0, \\frac{5}{6} m d^2 \\omega)$"
+        },
+        {
+          "id": "B",
+          "text": "$(m\\omega d, \\frac{5}{6} m d^2 \\omega)$"
+        },
+        {
+          "id": "C",
+          "text": "$(0, \\frac{5}{36} m d^2 \\omega)$"
+        },
+        {
+          "id": "D",
+          "text": "$(0, \\frac{25}{36} m d^2 \\omega)$"
+        }
+      ],
+      "correct_answer": "A",
+      "concepts": [
+        "com_ratio",
+        "omega_to_v",
+        "com_frame_momentum",
+        "single_particle_L",
+        "multi_body_L",
+        "binary_system_modeling"
+      ],
+      "error_map": {
+        "B": [
+          "ignore_reference_frame",
+          "partial_system_model"
+        ],
+        "C": [
+          "missing_component"
+        ],
+        "D": [
+          "incorrect_center_of_mass_relation",
+          "algebra_error"
+        ]
+      },
+      "difficulty": 3,
+      "next_rules": {
+        "ignore_reference_frame": "q7",
+        "partial_system_model": "q5",
+        "missing_component": "q9",
+        "incorrect_center_of_mass_relation": "q1",
+        "algebra_error": "q6"
+      }
+    },
+    {
+      "id": "q12",
+      "statement": "在一個互繞運行的雙星系統中，恆星 A 的質量為 M，恆星 B 的質量為 3M。請問在「質心坐標系 (Center-of-Mass Frame)」中，這兩顆恆星的動量大小 (Magnitude) 的比例為何？",
+      "options": [
+        {
+          "id": "A",
+          "text": "$P_A : P_B = 1:3$"
+        },
+        {
+          "id": "B",
+          "text": "$P_A : P_B = 3:1$"
+        },
+        {
+          "id": "C",
+          "text": "$P_A : P_B = 1:1$"
+        },
+        {
+          "id": "D",
+          "text": "無法確定，因為沒有給予軌道半徑"
+        }
+      ],
+      "correct_answer": "C",
+      "concepts": [],
+      "error_map": {
+        "A": [
+          "error_misunderstand_com_0"
+        ],
+        "B": [
+          "error_inverse_misapply"
+        ],
+        "D": [
+          "error_unfamiliar_com"
+        ]
+      },
+      "next_rules": {
+        "error_misunderstand_com_0": "q3",
+        "default": "q10"
+      }
+    },
+    {
+      "id": "q13",
+      "statement": "兩個星體 A 與 B 以角速度 $\\omega$ 繞質心公轉。若 A 距離質心 $R_A$，B 距離質心 $R_B$，且 $R_A = 2 R_B$。請問兩星體的切線速度大小比例 $v_A : v_B$ 為何？",
+      "options": [
+        {
+          "id": "A",
+          "text": "$v_A : v_B = 1:2$"
+        },
+        {
+          "id": "B",
+          "text": "$v_A : v_B = 2:1$"
+        },
+        {
+          "id": "C",
+          "text": "$v_A : v_B = 1:4$"
+        },
+        {
+          "id": "D",
+          "text": "$v_A : v_B = 4:1$"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [
+        "tangential_velocity",
+        "angular_velocity"
+      ],
+      "error_map": {
+        "A": [
+          "wrong_formula"
+        ],
+        "C": [
+          "square_misconception"
+        ],
+        "D": [
+          "square_misconception"
+        ]
+      },
+      "next_rules": {
+        "wrong_formula": "q2",
+        "default": "q11"
+      }
+    },
+    {
+      "id": "q11",
+      "statement": "一個質量為 m 的質點，以速度 v 在半徑為 r 的圓周上運動。請問它對圓心的角動量量值為何？",
+      "options": [
+        {
+          "id": "A",
+          "text": "$L = mv$"
+        },
+        {
+          "id": "B",
+          "text": "$L = mvr$"
+        },
+        {
+          "id": "C",
+          "text": "$L = v/r$"
+        },
+        {
+          "id": "D",
+          "text": "$L = \\omega r$"
+        }
+      ],
+      "correct_answer": "B",
+      "concepts": [],
+      "error_map": {
+        "A": [
+          "error_p_mv_vs_angular"
+        ],
+        "C": [
+          "error_confused_with_angular_velocity"
+        ],
+        "D": [
+          "error_misidentifying_velocity"
+        ]
+      },
+      "next_rules": {
+        "error_p_mv_vs_angular": "q4",
+        "error_confused_with_angular_velocity": "q4",
+        "error_misidentifying_velocity": "q4",
+        "default": "q10"
+      }
+    }
+  ]
+}
