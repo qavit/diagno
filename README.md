@@ -127,7 +127,7 @@ That is intentional:
 The MVP is a minimal full-stack app:
 
 - `FastAPI` backend
-- lightweight static frontend
+- `React + TypeScript + Vite` frontend
 - typed Python models
 - in-memory persistence
 - rule-based diagnosis engine
@@ -139,13 +139,13 @@ Main backend modules:
 - [app/diagnosis.py](app/diagnosis.py): diagnosis and routing logic
 - [app/store.py](app/store.py): in-memory attempts and student state
 - [app/i18n.py](app/i18n.py): bilingual `en` / `zh-TW` content layer
-- [app/main.py](app/main.py): API and static app serving
+- [app/main.py](app/main.py): API and production app serving
 
 Frontend assets:
 
-- [static/index.html](static/index.html)
-- [static/app.js](static/app.js)
-- [static/styles.css](static/styles.css)
+- [frontend/src/App.tsx](frontend/src/App.tsx)
+- [frontend/src/components.tsx](frontend/src/components.tsx)
+- [frontend/src/styles.css](frontend/src/styles.css)
 
 High-level architecture:
 
@@ -281,17 +281,24 @@ Install dependencies:
 pip install -e ".[dev]"
 ```
 
-Start the app:
+Start the backend:
 
 ```bash
 uvicorn app.main:app --reload --app-dir .
 ```
 
-Open:
+Start the frontend dev server:
 
 ```text
-http://127.0.0.1:8000
+cd frontend
+npm install
+npm run dev
 ```
+
+Open:
+
+- frontend dev: `http://127.0.0.1:5173`
+- backend API: `http://127.0.0.1:8000`
 
 ## Tests
 

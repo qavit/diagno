@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.data import CONCEPTS, ERROR_INDEX, QUESTION_INDEX
@@ -15,7 +15,6 @@ from app.models import AttemptRequest
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-STATIC_DIR = BASE_DIR / "static"
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 FRONTEND_ASSETS_DIR = FRONTEND_DIST_DIR / "assets"
 LOCALIZED_METADATA = build_localized_metadata()
@@ -29,14 +28,23 @@ app.add_middleware(
 )
 if FRONTEND_ASSETS_DIR.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_ASSETS_DIR), name="assets")
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-@app.get("/")
-def index() -> FileResponse:
+@app.get("/", response_model=None)
+def index():
     if FRONTEND_DIST_DIR.exists():
         return FileResponse(FRONTEND_DIST_DIR / "index.html")
-    return FileResponse(STATIC_DIR / "index.html")
+    return HTMLResponse(
+        """
+        <html>
+          <body style="font-family: sans-serif; padding: 24px;">
+            <h1>diagno frontend not built</h1>
+            <p>Run the Vite dev server at <code>http://127.0.0.1:5173</code> for local frontend development.</p>
+            <p>Or build the frontend with <code>npm run build</code> in <code>frontend/</code> and reload this page.</p>
+          </body>
+        </html>
+        """
+    )
 
 
 @app.get("/questions/{question_id}")
