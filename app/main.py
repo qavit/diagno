@@ -57,10 +57,26 @@ def get_question(question_id: str, lang: str | None = Query(default=None)):
 
 @app.post("/attempt")
 def create_attempt(payload: AttemptRequest, lang: str | None = Query(default=None)):
+    # ... existing code ...
     if payload.question_id not in QUESTION_INDEX:
         raise HTTPException(status_code=404, detail="Question not found")
     resolved_lang = normalize_lang(lang)
     response = store.submit_attempt(payload)
+    return _format_attempt_response(response, resolved_lang)
+
+@app.post("/diagnose-preview")
+def diagnose_preview(payload: AttemptRequest, lang: str | None = Query(default=None)):
+    """Real-time diagnosis without saving to database."""
+    if payload.question_id not in QUESTION_INDEX:
+        raise HTTPException(status_code=404, detail="Question not found")
+    
+    resolved_lang = normalize_lang(lang)
+    question = QUESTION_INDEX[payload.question_id]
+    diagnosis = store.preview_attempt(payload) # We'll add this to store
+    
+    return _format_attempt_response(diagnosis, resolved_lang)
+
+def _format_attempt_response(response, resolved_lang):
     response_payload = response.model_dump()
     response_payload["question"] = localized_question(response.question, resolved_lang)
     response_payload["errors"] = [localized_error(error, resolved_lang) for error in response.errors]

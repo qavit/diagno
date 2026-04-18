@@ -66,11 +66,17 @@ class SQLiteStore:
             new_student = empty_student_model(CONCEPTS)
             conn.execute("INSERT INTO students (id, data) VALUES (?, ?)", (student_id, new_student.model_dump_json()))
             return new_student
-
     def submit_attempt(self, payload: AttemptRequest) -> AttemptResponse:
+        response = self.preview_attempt(payload)
+        self._save_attempt(response.attempt)
+        self._update_student_model(response.attempt) # This persists the state
+        return response
+
+    def preview_attempt(self, payload: AttemptRequest) -> AttemptResponse:
+        """Analyze an attempt without saving to DB or updating student model."""
         question = self.get_question(payload.question_id)
         diagnosis = diagnose_attempt(question, payload.answer)
-        
+
         attempt = Attempt(
             id=str(uuid4()),
             question_id=question.id,
@@ -81,9 +87,9 @@ class SQLiteStore:
             timestamp=now_utc(),
         )
 
-        student_model = self._update_student_model(attempt)
-        self._save_attempt(attempt)
-        
+        # Get current student model state (without updating it)
+        student_model = self.get_or_create_student(payload.student_id)
+
         error_objects = [ERROR_INDEX[error_id] for error_id in diagnosis.detected_error_types]
         hints = {error.id: error.hint_levels for error in error_objects}
         next_question_id = route_next_question(question, diagnosis.detected_error_types)

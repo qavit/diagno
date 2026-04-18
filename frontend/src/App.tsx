@@ -1,8 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { getMetadata, getNextQuestion, getQuestion, getStats, submitAttempt } from "./lib/api";
-import { buildHintTrack, translate } from "./lib/format";
+import { translate } from "./lib/format";
 import type { AttemptResponse, Lang, MetadataResponse, Question, StatsResponse } from "./lib/types";
-import { DiagnosisPanel, HeroHeader, QuestionWorkspace, InsightDrawer } from "./components";
+import { SettingsSidebar, SettingsModal, ChatMessage, ChatComposer, MasteryPanel } from "./components";
+import { MathText } from "./lib/math";
+
+
+interface Message {
+  id: string;
+  role: 'tutor' | 'student' | 'diagnosis' | 'header';
+  content: string;
+  isMath?: boolean;
+  timestamp: string;
+}
 
 export function App() {
   const [lang, setLang] = useState<Lang>("en");
@@ -10,130 +20,320 @@ export function App() {
   const [metadata, setMetadata] = useState<MetadataResponse | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [diagnosis, setDiagnosis] = useState<AttemptResponse | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const [stats, setStats] = useState<StatsResponse | null>(null);
-  const [hintCursor, setHintCursor] = useState(0);
-  const [isInsightOpen, setIsInsightOpen] = useState(false);
-  const [loadingState, setLoadingState] = useState({ metadata: false, question: false, submit: false });
+  const [isThinking, setIsThinking] = useState(false);
+  const [previewDiagnosis, setPreviewDiagnosis] = useState<AttemptResponse | null>(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  
+  // UI Settings State
+  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
+  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Layout State
+  const [leftWidth, setLeftWidth] = useState(280);
+  const [rightWidth, setRightWidth] = useState(400);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [draggingPane, setDraggingPane] = useState<'left' | 'right' | null>(null);
 
-  const hintTrack = useMemo(
-    () => diagnosis ? buildHintTrack(diagnosis.errors, translate(metadata, "hint_label")) : [],
-    [diagnosis, metadata],
-  );
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastQuestionId = useRef<string | null>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages, isThinking, previewDiagnosis]);
+
+  // Handle scroll events to show/hide "Jump to bottom"
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setShowScrollBtn(!isNearBottom);
+  };
+
+  const jumpToBottom = () => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  };
+
+  // Handle Drag Resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (draggingPane === 'left') {
+        const newWidth = Math.max(150, Math.min(e.clientX, window.innerWidth / 2));
+        setLeftWidth(newWidth);
+        if (newWidth > 150 && leftCollapsed) setLeftCollapsed(false);
+      } else if (draggingPane === 'right') {
+        const newWidth = Math.max(250, Math.min(window.innerWidth - e.clientX, window.innerWidth - leftWidth - 100));
+        setRightWidth(newWidth);
+        if (newWidth > 250 && rightCollapsed) setRightCollapsed(false);
+      }
+    };
+    const handleMouseUp = () => setDraggingPane(null);
+
+    if (draggingPane) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none'; // Prevent text selection
+    } else {
+      document.body.style.userSelect = '';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+  }, [draggingPane, leftWidth, leftCollapsed, rightCollapsed]);
+
+  // Apply Theme & Font Settings
+  useEffect(() => {
+    const root = document.documentElement;
+    let computedTheme = theme;
+    if (theme === 'system') {
+      computedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-theme', computedTheme);
+    root.setAttribute('data-font-size', fontSize);
+  }, [theme, fontSize]);
+
+  // Real-time Diagnosis Debounce
+  useEffect(() => {
+    const finalAnswer = selectedAnswer || inputValue;
+    if (!finalAnswer || !question) {
+      setPreviewDiagnosis(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsThinking(true);
+      try {
+        const res = await import("./lib/api").then(api => api.diagnosePreview({ 
+          question_id: question.id, 
+          student_id: studentId, 
+          answer: finalAnswer 
+        }, lang));
+        setPreviewDiagnosis(res);
+      } finally {
+        setIsThinking(false);
+      }
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timer);
+  }, [inputValue, selectedAnswer, question, studentId, lang]);
 
   useEffect(() => {
-    void loadMetadataAndStats(lang);
-    void loadQuestion("q1", lang);
+    // Only load initial question once per session/language change
+    void loadInitialData();
   }, [lang]);
 
-  async function loadMetadataAndStats(nextLang: Lang) {
-    setLoadingState((current) => ({ ...current, metadata: true }));
-    try {
-      const [metadataResponse, statsResponse] = await Promise.all([getMetadata(nextLang), getStats()]);
-      setMetadata(metadataResponse);
-      setStats(statsResponse);
-      document.documentElement.lang = nextLang;
-    } finally {
-      setLoadingState((current) => ({ ...current, metadata: false }));
-    }
+  async function loadInitialData() {
+    const [metaRes, statsRes] = await Promise.all([getMetadata(lang), getStats()]);
+    setMetadata(metaRes);
+    setStats(statsRes);
+    
+    // Reset conversation on language change or refresh
+    setMessages([]);
+    
+    const q1 = await getQuestion("q1", lang);
+    setQuestion(q1);
+    lastQuestionId.current = q1.id;
+    
+    // Wrap in timeout to ensure React has cleared messages state
+    setTimeout(() => {
+      addMessage('header', q1.id);
+      addTutorMessage(q1.statement, true);
+    }, 0);
   }
 
-  async function loadQuestion(questionId: string, nextLang: Lang) {
-    setLoadingState((current) => ({ ...current, question: true }));
-    try {
-      const response = await getQuestion(questionId, nextLang);
-      setQuestion(response);
-      setSelectedAnswer(null);
-      setDiagnosis(null);
-      setHintCursor(0);
-    } finally {
-      setLoadingState((current) => ({ ...current, question: false }));
-    }
+  function addMessage(role: Message['role'], content: string, isMath = false) {
+    const msg: Message = {
+      id: Math.random().toString(36),
+      role,
+      content,
+      isMath,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, msg]);
+  }
+
+  function addTutorMessage(content: string, isMath = false) {
+    addMessage('tutor', content, isMath);
+  }
+
+  function addStudentMessage(content: string) {
+    addMessage('student', content);
   }
 
   async function handleSubmit() {
-    if (!selectedAnswer || !question) return;
-    setLoadingState((current) => ({ ...current, submit: true }));
+    const finalAnswer = selectedAnswer || inputValue;
+    if (!finalAnswer || !question) return;
+
+    addStudentMessage(finalAnswer);
+    setInputValue("");
+    setSelectedAnswer(null);
+    setIsThinking(true);
+
     try {
-      const response = await submitAttempt(
-        { question_id: question.id, student_id: studentId || "demo-student", answer: selectedAnswer },
-        lang,
-      );
-      setDiagnosis(response);
-      setHintCursor(0);
+      const res = await submitAttempt({ question_id: question.id, student_id: studentId, answer: finalAnswer }, lang);
+      
+      // Tutor feedback
+      const feedback = res.attempt.is_correct 
+        ? "✓ Correct! Great job." 
+        : `✕ Incorrect. Let's look closer.`;
+      addTutorMessage(feedback);
+
+      // Error diagnoses & hints
+      res.errors.forEach(err => {
+        addTutorMessage(`**${err.name}**: ${err.description}`, true);
+        err.hint_levels.forEach(hint => addTutorMessage(hint, true));
+      });
+
+      // Recommended next question
+      if (res.recommended_next_question_id && res.recommended_next_question_id !== lastQuestionId.current) {
+        const nextQ = await getQuestion(res.recommended_next_question_id, lang);
+        setQuestion(nextQ);
+        lastQuestionId.current = nextQ.id;
+        setTimeout(() => {
+          addMessage('header', nextQ.id);
+          addTutorMessage(`Next challenge: ${nextQ.statement}`, true);
+        }, 1000);
+      }
+      
       const latestStats = await getStats();
       setStats(latestStats);
     } finally {
-      setLoadingState((current) => ({ ...current, submit: false }));
+      setIsThinking(false);
     }
   }
 
-  async function handleNextQuestion() {
-    if (!question) return;
-    const nextQuestion = diagnosis?.errors[0]
-      ? await getNextQuestion({ currentQuestionId: question.id, lang, errorType: diagnosis.errors[0].id })
-      : diagnosis?.recommended_next_question_id
-        ? await getQuestion(diagnosis.recommended_next_question_id, lang)
-        : await getNextQuestion({ currentQuestionId: question.id, lang });
-    setQuestion(nextQuestion);
-    setSelectedAnswer(null);
-    setDiagnosis(null);
-    setHintCursor(0);
-  }
-
   return (
-    <main className="app-shell">
-      <HeroHeader
-        metadata={metadata}
-        lang={lang}
-        studentId={studentId}
-        onStudentIdChange={setStudentId}
-        onLangChange={setLang}
+    <div 
+      className="app-container"
+      style={{
+        gridTemplateColumns: `${leftCollapsed ? 0 : leftWidth}px auto 1fr auto ${rightCollapsed ? 0 : rightWidth}px`
+      }}
+    >
+      {/* Column 1: Pulse (Nav & Mastery) */}
+      {!leftCollapsed && (
+        <aside className="column-pulse">
+          <SettingsSidebar 
+            studentId={studentId}
+            onOpenSettings={() => setShowSettings(true)}
+          />
+          <div style={{ marginTop: 'auto' }}>
+             <MasteryPanel metadata={metadata} studentModel={stats?.concept_mastery_by_student[studentId] || null} />
+          </div>
+        </aside>
+      )}
+
+      {/* Left Splitter */}
+      <div 
+        className={`splitter ${draggingPane === 'left' ? 'dragging' : ''}`}
+        onMouseDown={() => setDraggingPane('left')}
+        onDoubleClick={() => setLeftCollapsed(!leftCollapsed)}
       />
 
-      <div className="chat-container">
-        <QuestionWorkspace
-          metadata={metadata}
-          question={question}
-          selectedAnswer={selectedAnswer}
-          isSubmitting={loadingState.submit || loadingState.question}
-          onSelectAnswer={setSelectedAnswer}
-          onSubmit={() => void handleSubmit()}
-          onNextQuestion={() => void handleNextQuestion()}
-        />
-
-        <DiagnosisPanel
-          metadata={metadata}
-          diagnosis={diagnosis}
-          hintCursor={hintCursor}
-          flatHints={hintTrack}
-          onShowHint={() => setHintCursor((current) => Math.min(current + 1, hintTrack.length))}
-        />
-      </div>
-
-      <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-        <button 
-          className="btn btn-ghost" 
-          style={{ width: '100%', marginBottom: '1rem' }}
-          onClick={() => setIsInsightOpen(!isInsightOpen)}
-        >
-          {isInsightOpen ? "Close Insights" : "Show Student Mastery & Teacher Stats"}
-        </button>
-        {isInsightOpen && (
-          <InsightDrawer 
-            metadata={metadata} 
-            studentModel={diagnosis?.student_model ?? (stats?.concept_mastery_by_student[studentId] || null)}
-            stats={stats}
-            lang={lang}
-          />
-        )}
-      </div>
-
-      {(loadingState.metadata || loadingState.question) && (
-        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', background: 'white', padding: '0.5rem 1rem', borderRadius: '999px', boxShadow: 'var(--shadow-md)' }}>
-          {translate(metadata, "loading")}
+      {/* Column 2: The Stage (Persistent Problem) */}
+      <main className="column-stage">
+        <div className="panel-header">
+          <div className="stage-title">Current Challenge</div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="toggle-btn" onClick={() => setLeftCollapsed(!leftCollapsed)}>
+              {leftCollapsed ? '▶ Pulse' : '◀ Collapse'}
+            </button>
+            <button className="toggle-btn" onClick={() => setRightCollapsed(!rightCollapsed)}>
+              {rightCollapsed ? 'Tutor ◀' : 'Collapse ▶'}
+            </button>
+          </div>
         </div>
+
+        {question && (
+          <div className="problem-card">
+            <h2 style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1rem' }}>
+              Current Challenge
+            </h2>
+            <div style={{ fontSize: '1.25rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+              <MathText text={question.statement} />
+            </div>
+            
+            {/* Future placeholder for diagrams */}
+            <div style={{ 
+              marginTop: '2rem', 
+              height: '240px', 
+              background: 'rgba(255,255,255,0.02)', 
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px dashed var(--glass-border)',
+              color: 'var(--text-muted)',
+              fontSize: '0.9rem'
+            }}>
+              Interactive Physics Model Area
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Right Splitter */}
+      <div 
+        className={`splitter ${draggingPane === 'right' ? 'dragging' : ''}`}
+        onMouseDown={() => setDraggingPane('right')}
+        onDoubleClick={() => setRightCollapsed(!rightCollapsed)}
+      />
+
+      {/* Column 3: The Tutor (Feedback & Interaction) */}
+      {!rightCollapsed && (
+        <section className="column-tutor">
+          <div className="panel-header">
+            <div className="stage-title">AI Tutor</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{messages.length} messages</div>
+          </div>
+
+          <div className="tutor-feed" ref={scrollRef} onScroll={handleScroll}>
+            {messages.map(m => (
+              <ChatMessage key={m.id} role={m.role} content={m.content} isMath={m.isMath} timestamp={m.timestamp} />
+            ))}
+          </div>
+
+          <button 
+            className={`scroll-anchor-btn ${showScrollBtn ? 'visible' : ''}`}
+            onClick={jumpToBottom}
+            title="Jump to Latest"
+          >
+            ↓
+          </button>
+
+          <ChatComposer 
+            metadata={metadata}
+            question={question}
+            selectedAnswer={selectedAnswer}
+            inputValue={inputValue}
+            isThinking={isThinking}
+            previewDiagnosis={previewDiagnosis}
+            onInputChange={setInputValue}
+            onSelectOption={setSelectedAnswer}
+            onSubmit={() => void handleSubmit()}
+          />
+        </section>
       )}
-    </main>
+
+      {showSettings && (
+        <SettingsModal
+          metadata={metadata}
+          lang={lang}
+          theme={theme}
+          fontSize={fontSize}
+          onClose={() => setShowSettings(false)}
+          onLangChange={setLang}
+          onThemeChange={setTheme}
+          onFontSizeChange={setFontSize}
+        />
+      )}
+    </div>
   );
 }
+

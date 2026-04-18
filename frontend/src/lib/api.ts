@@ -28,6 +28,18 @@ export function submitAttempt(payload: {
   });
 }
 
+export function diagnosePreview(payload: {
+  question_id: string;
+  student_id: string;
+  answer: string;
+}, lang: Lang): Promise<AttemptResponse> {
+  return requestJson(`/diagnose-preview?lang=${encodeURIComponent(lang)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getNextQuestion(params: {
   currentQuestionId: string;
   lang: Lang;
