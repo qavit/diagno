@@ -12,7 +12,7 @@ def test_question_endpoint_returns_traditional_chinese_content():
 
     assert response.status_code == 200
     assert "質心" in payload["statement"]
-    assert payload["options"][0]["text"] == "r_m = d/6, r_5m = 5d/6"
+    assert payload["options"][0]["text"] == "$r_m = d/6$, $r_{5m} = 5d/6$"
 
 
 def test_attempt_endpoint_localizes_error_and_hints():

@@ -7,27 +7,27 @@ CONCEPTS = [
     Concept(
         id="com_ratio",
         name="Center of mass distance relation",
-        description="For two masses on a line, distances from the center of mass satisfy m1 r1 = m2 r2.",
+        description="For two masses on a line, distances from the center of mass satisfy $m_1 r_1 = m_2 r_2$.",
     ),
     Concept(
         id="omega_to_v",
         name="Tangential speed from angular speed",
-        description="In circular motion, tangential speed is v = omega r.",
+        description="In circular motion, tangential speed is $v = \\omega r$.",
     ),
     Concept(
         id="com_frame_momentum",
         name="Momentum in the center-of-mass frame",
-        description="Total momentum is zero in the center-of-mass frame.",
+        description="Total momentum is zero in the center-of-mass frame, so $p_{\\text{total}} = 0$.",
     ),
     Concept(
         id="single_particle_L",
         name="Angular momentum of one particle",
-        description="Magnitude is L = r_perp p = mvr for perpendicular velocity.",
+        description="Magnitude is $L = r_\\perp p = mvr$ for perpendicular velocity.",
     ),
     Concept(
         id="multi_body_L",
         name="Total angular momentum of a system",
-        description="Total angular momentum is the sum of contributions from all bodies.",
+        description="Total angular momentum is the sum of contributions from all bodies, so $L_{\\text{total}} = \\sum_i L_i$.",
     ),
     Concept(
         id="binary_system_modeling",
@@ -56,19 +56,19 @@ ERROR_TYPES = [
         category=ErrorCategory.CONCEPT,
         hint_levels=[
             "Which mass should sit closer to the center of mass: the heavier one or the lighter one?",
-            "Use m1 r1 = m2 r2 before substituting numbers.",
-            "For masses m and 5m, the lighter mass must be five times farther from the center of mass.",
+            "Use $m_1 r_1 = m_2 r_2$ before substituting numbers.",
+            "For masses $m$ and $5m$, the lighter mass must be five times farther from the center of mass.",
         ],
     ),
     ErrorType(
         id="wrong_omega_radius_link",
-        name="Incorrect use of v = omega r",
+        name="Incorrect use of $v = \\omega r$",
         description="The student did not connect angular speed and radius correctly.",
         category=ErrorCategory.CONCEPT,
         hint_levels=[
             "For uniform circular motion, how is tangential speed related to angular speed?",
-            "Each body has its own radius from the center of mass, so each speed is omega times that radius.",
-            "Compute v1 = omega r1 and v2 = omega r2 before finding momentum or angular momentum.",
+            "Each body has its own radius from the center of mass, so each speed is $\\omega$ times that radius.",
+            "Compute $v_1 = \\omega r_1$ and $v_2 = \\omega r_2$ before finding momentum or angular momentum.",
         ],
     ),
     ErrorType(
@@ -79,7 +79,7 @@ ERROR_TYPES = [
         hint_levels=[
             "How many masses are orbiting in the system?",
             "Write one angular momentum term for each body around the same origin.",
-            "The total angular momentum is L1 + L2, not just one term.",
+            "The total angular momentum is $L_1 + L_2$, not just one term.",
         ],
     ),
     ErrorType(
@@ -100,7 +100,7 @@ ERROR_TYPES = [
         category=ErrorCategory.ALGEBRA,
         hint_levels=[
             "Your setup may be right. Recheck the substitution and simplification carefully.",
-            "Keep common factors such as m, d, and omega symbolic until the last step.",
+            "Keep common factors such as $m$, $d$, and $\\omega$ symbolic until the last step.",
             "After combining terms, the coefficient should simplify cleanly without changing the physical structure.",
         ],
     ),
@@ -121,12 +121,12 @@ ERROR_TYPES = [
 QUESTIONS = [
     Question(
         id="q1",
-        statement="Two masses m and 5m are separated by distance d. In the center-of-mass frame, what are their distances from the center of mass?",
+        statement="Two masses $m$ and $5m$ are separated by distance $d$. In the center-of-mass frame, what are their distances from the center of mass?",
         options=[
-            Option(id="A", text="r_m = d/6, r_5m = 5d/6"),
-            Option(id="B", text="r_m = 5d/6, r_5m = d/6"),
-            Option(id="C", text="r_m = d/2, r_5m = d/2"),
-            Option(id="D", text="r_m = 5d/4, r_5m = d/4"),
+            Option(id="A", text="$r_m = d/6$, $r_{5m} = 5d/6$"),
+            Option(id="B", text="$r_m = 5d/6$, $r_{5m} = d/6$"),
+            Option(id="C", text="$r_m = d/2$, $r_{5m} = d/2$"),
+            Option(id="D", text="$r_m = 5d/4$, $r_{5m} = d/4$"),
         ],
         correct_answer="B",
         concepts=["com_ratio"],
@@ -143,12 +143,12 @@ QUESTIONS = [
     ),
     Question(
         id="q2",
-        statement="A mass moves in a circle of radius r around the center of mass with angular speed omega. Which expression gives its speed?",
+        statement="A mass moves in a circle of radius $r$ around the center of mass with angular speed $\\omega$. Which expression gives its speed?",
         options=[
-            Option(id="A", text="v = r/omega"),
-            Option(id="B", text="v = omega/r"),
-            Option(id="C", text="v = omega r"),
-            Option(id="D", text="v = omega r^2"),
+            Option(id="A", text="$v = r/\\omega$"),
+            Option(id="B", text="$v = \\omega/r$"),
+            Option(id="C", text="$v = \\omega r$"),
+            Option(id="D", text="$v = \\omega r^2$"),
         ],
         correct_answer="C",
         concepts=["omega_to_v"],
@@ -168,7 +168,7 @@ QUESTIONS = [
         statement="In the center-of-mass frame of any isolated two-body system, what is the total momentum of the system?",
         options=[
             Option(id="A", text="Always zero"),
-            Option(id="B", text="Equal to mv of the lighter body"),
+            Option(id="B", text="Equal to $mv$ of the lighter body"),
             Option(id="C", text="Equal to the sum of momentum magnitudes"),
             Option(id="D", text="Cannot be determined without the radii"),
         ],
@@ -188,12 +188,12 @@ QUESTIONS = [
     ),
     Question(
         id="q4",
-        statement="A particle of mass m moves perpendicular to the radius vector at speed v, at distance r from the origin. What is the magnitude of its angular momentum about the origin?",
+        statement="A particle of mass $m$ moves perpendicular to the radius vector at speed $v$, at distance $r$ from the origin. What is the magnitude of its angular momentum about the origin?",
         options=[
-            Option(id="A", text="L = mvr"),
-            Option(id="B", text="L = mv/r"),
-            Option(id="C", text="L = mr/v"),
-            Option(id="D", text="L = mv + r"),
+            Option(id="A", text="$L = mvr$"),
+            Option(id="B", text="$L = mv/r$"),
+            Option(id="C", text="$L = mr/v$"),
+            Option(id="D", text="$L = mv + r$"),
         ],
         correct_answer="A",
         concepts=["single_particle_L"],
@@ -212,10 +212,10 @@ QUESTIONS = [
         id="q5",
         statement="In a binary system, each body contributes angular momentum about the center of mass. Which expression matches the total angular momentum?",
         options=[
-            Option(id="A", text="L_total = L1"),
-            Option(id="B", text="L_total = L1 + L2"),
-            Option(id="C", text="L_total = L1 - L2 because the bodies are on opposite sides"),
-            Option(id="D", text="L_total = 0 in the center-of-mass frame"),
+            Option(id="A", text="$L_{\\text{total}} = L_1$"),
+            Option(id="B", text="$L_{\\text{total}} = L_1 + L_2$"),
+            Option(id="C", text="$L_{\\text{total}} = L_1 - L_2$ because the bodies are on opposite sides"),
+            Option(id="D", text="$L_{\\text{total}} = 0$ in the center-of-mass frame"),
         ],
         correct_answer="B",
         concepts=["multi_body_L"],
@@ -233,12 +233,12 @@ QUESTIONS = [
     ),
     Question(
         id="q6",
-        statement="For masses m and 5m separated by d in circular motion about their center of mass, what are the speeds of the two masses?",
+        statement="For masses $m$ and $5m$ separated by $d$ in circular motion about their center of mass, what are the speeds of the two masses?",
         options=[
-            Option(id="A", text="v_m = omega d/6, v_5m = 5omega d/6"),
-            Option(id="B", text="v_m = 5omega d/6, v_5m = omega d/6"),
-            Option(id="C", text="v_m = v_5m = omega d/2"),
-            Option(id="D", text="v_m = 5omega d, v_5m = omega d"),
+            Option(id="A", text="$v_m = \\omega d/6$, $v_{5m} = 5\\omega d/6$"),
+            Option(id="B", text="$v_m = 5\\omega d/6$, $v_{5m} = \\omega d/6$"),
+            Option(id="C", text="$v_m = v_{5m} = \\omega d/2$"),
+            Option(id="D", text="$v_m = 5\\omega d$, $v_{5m} = \\omega d$"),
         ],
         correct_answer="B",
         concepts=["com_ratio", "omega_to_v"],
@@ -256,12 +256,12 @@ QUESTIONS = [
     ),
     Question(
         id="q7",
-        statement="Binary system: masses m and 5m are separated by d and rotate with angular speed omega about their center of mass. What is the total momentum in the center-of-mass frame?",
+        statement="Binary system: masses $m$ and $5m$ are separated by $d$ and rotate with angular speed $\\omega$ about their center of mass. What is the total momentum in the center-of-mass frame?",
         options=[
             Option(id="A", text="0"),
-            Option(id="B", text="m omega d"),
-            Option(id="C", text="5m omega d"),
-            Option(id="D", text="m(5omega d/6) + 5m(omega d/6)"),
+            Option(id="B", text="$m\\omega d$"),
+            Option(id="C", text="$5m\\omega d$"),
+            Option(id="D", text="$m(5\\omega d/6) + 5m(\\omega d/6)$"),
         ],
         correct_answer="A",
         concepts=["com_frame_momentum", "omega_to_v", "binary_system_modeling"],
@@ -326,12 +326,12 @@ QUESTIONS = [
     ),
     Question(
         id="q10",
-        statement="Full problem: masses m and 5m are separated by d and rotate with angular speed omega. In the center-of-mass frame, what is the correct pair (total momentum, total angular momentum)?",
+        statement="Full problem: masses $m$ and $5m$ are separated by $d$ and rotate with angular speed $\\omega$. In the center-of-mass frame, what is the correct pair $(\\text{total momentum}, \\text{total angular momentum})$?",
         options=[
-            Option(id="A", text="(0, 5/6 m d^2 omega)"),
-            Option(id="B", text="(m omega d, 5/6 m d^2 omega)"),
-            Option(id="C", text="(0, 5/36 m d^2 omega)"),
-            Option(id="D", text="(0, 25/36 m d^2 omega)"),
+            Option(id="A", text="$(0, \\frac{5}{6} m d^2 \\omega)$"),
+            Option(id="B", text="$(m\\omega d, \\frac{5}{6} m d^2 \\omega)$"),
+            Option(id="C", text="$(0, \\frac{5}{36} m d^2 \\omega)$"),
+            Option(id="D", text="$(0, \\frac{25}{36} m d^2 \\omega)$"),
         ],
         correct_answer="A",
         concepts=[
