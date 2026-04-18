@@ -1,9 +1,10 @@
-from app.store import InMemoryStore
+from app.store import SQLiteStore
 from app.models import AttemptRequest
 
 
 def test_submit_attempt_updates_student_model_and_stats():
-    store = InMemoryStore()
+    # Use in-memory SQLite for testing to avoid file I/O and side effects
+    store = SQLiteStore(":memory:")
     response = store.submit_attempt(
         AttemptRequest(question_id="q1", student_id="s1", answer="A")
     )
