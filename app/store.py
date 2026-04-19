@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections import Counter
 from pathlib import Path
 from uuid import uuid4
 from datetime import datetime
@@ -69,7 +70,7 @@ class SQLiteStore:
     def submit_attempt(self, payload: AttemptRequest) -> AttemptResponse:
         response = self.preview_attempt(payload)
         self._save_attempt(response.attempt)
-        self._update_student_model(response.attempt) # This persists the state
+        response.student_model = self._update_student_model(response.attempt)
         return response
 
     def preview_attempt(self, payload: AttemptRequest) -> AttemptResponse:
@@ -119,35 +120,36 @@ class SQLiteStore:
             current = student.concept_mastery.get(concept_id, 0.5)
             student.concept_mastery[concept_id] = min(1.0, max(0.0, round(current + delta, 2)))
 
-        from collections import Counter
         error_counter = Counter(student.recent_errors)
         error_counter.update(attempt.detected_errors)
         student.recent_errors = dict(error_counter)
 
         with self._connection() as conn:
             conn.execute("UPDATE students SET data = ? WHERE id = ?", (student.model_dump_json(), attempt.student_id))
-            
+
         return student
 
     def stats(self) -> StatsResponse:
         with self._connection() as conn:
+            cursor = conn.execute("SELECT COUNT(*) FROM attempts")
+            total_attempts = cursor.fetchone()[0]
+
+            cursor = conn.execute("""
+                SELECT err.value, COUNT(*) as cnt
+                FROM attempts, json_each(json_extract(data, '$.detected_errors')) AS err
+                GROUP BY err.value
+            """)
+            error_distribution = {row[0]: row[1] for row in cursor.fetchall()}
+
             cursor = conn.execute("SELECT data FROM attempts ORDER BY timestamp DESC LIMIT 10")
             recent_attempts = [Attempt.model_validate_json(row[0]) for row in cursor.fetchall()]
-            
-            cursor = conn.execute("SELECT data FROM attempts")
-            all_attempts = [Attempt.model_validate_json(row[0]) for row in cursor.fetchall()]
-            
-            from collections import Counter
-            error_counter = Counter()
-            for att in all_attempts:
-                error_counter.update(att.detected_errors)
 
             cursor = conn.execute("SELECT id, data FROM students")
             all_students = {row[0]: StudentModel.model_validate_json(row[1]) for row in cursor.fetchall()}
 
             return StatsResponse(
-                total_attempts=len(all_attempts),
-                error_distribution=dict(error_counter),
+                total_attempts=total_attempts,
+                error_distribution=error_distribution,
                 concept_mastery_by_student=all_students,
                 recent_attempts=recent_attempts,
             )
