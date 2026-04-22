@@ -446,7 +446,8 @@
       "error_map": {
         "A": [
           "incorrect_center_of_mass_relation",
-          "wrong_omega_radius_link"
+          "wrong_omega_radius_link",
+          "vector_direction_error"
         ],
         "C": [
           "incorrect_center_of_mass_relation"
@@ -500,7 +501,8 @@
         ],
         "D": [
           "ignore_reference_frame",
-          "vector_direction_error"
+          "vector_direction_error",
+          "missing_component"
         ]
       },
       "difficulty": 2,
@@ -631,10 +633,12 @@
       "error_map": {
         "B": [
           "ignore_reference_frame",
-          "partial_system_model"
+          "partial_system_model",
+          "missing_component"
         ],
         "C": [
-          "missing_component"
+          "missing_component",
+          "algebra_error"
         ],
         "D": [
           "incorrect_center_of_mass_relation",

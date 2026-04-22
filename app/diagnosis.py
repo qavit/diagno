@@ -11,7 +11,6 @@ def diagnose_attempt(question: Question, answer: str) -> DiagnosisResult:
 
     if not is_correct:
         detected_errors.extend(question.error_map.get(normalized_answer, []))
-        detected_errors.extend(_derived_rules(question.id, normalized_answer))
 
     unique_errors = list(dict.fromkeys(detected_errors))
     return DiagnosisResult(
@@ -31,19 +30,3 @@ def route_next_question(question: Question, detected_errors: list[str]) -> str |
     if current_index + 1 < len(question_ids):
         return question_ids[current_index + 1]
     return None
-
-
-def _derived_rules(question_id: str, answer: str) -> list[str]:
-    derived: list[str] = []
-
-    if question_id == "q10":
-        if answer == "B":
-            derived.append("missing_component")
-        if answer == "C":
-            derived.append("algebra_error")
-    elif question_id == "q6" and answer == "A":
-        derived.append("vector_direction_error")
-    elif question_id == "q7" and answer == "D":
-        derived.append("missing_component")
-
-    return derived
