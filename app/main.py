@@ -61,7 +61,6 @@ def get_question(question_id: str, lang: str | None = Query(default=None)):
 
 @app.post("/attempt")
 def create_attempt(payload: AttemptRequest, lang: str | None = Query(default=None)):
-    # ... existing code ...
     if payload.question_id not in QUESTION_INDEX:
         raise HTTPException(status_code=404, detail="Question not found")
     resolved_lang = normalize_lang(lang)
@@ -75,9 +74,7 @@ def diagnose_preview(payload: AttemptRequest, lang: str | None = Query(default=N
         raise HTTPException(status_code=404, detail="Question not found")
     
     resolved_lang = normalize_lang(lang)
-    question = QUESTION_INDEX[payload.question_id]
-    diagnosis = store.preview_attempt(payload) # We'll add this to store
-    
+    diagnosis = store.preview_attempt(payload)
     return _format_attempt_response(diagnosis, resolved_lang)
 
 def _format_attempt_response(response, resolved_lang):
@@ -102,7 +99,7 @@ def get_next_question(
         question = QUESTION_INDEX[current_question_id]
         if error_type:
             next_question_id = question.next_rules.get(error_type)
-            if next_question_id:
+            if next_question_id and next_question_id in QUESTION_INDEX:
                 return localized_question(QUESTION_INDEX[next_question_id], resolved_lang)
         sequential_next_id = route_next_question(question, [])
         if sequential_next_id:
@@ -111,7 +108,7 @@ def get_next_question(
     if error_type:
         for question in QUESTION_INDEX.values():
             mapped = question.next_rules.get(error_type)
-            if mapped:
+            if mapped and mapped in QUESTION_INDEX:
                 return localized_question(QUESTION_INDEX[mapped], resolved_lang)
 
     first_question = QUESTION_INDEX["q1"]

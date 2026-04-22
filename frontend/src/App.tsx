@@ -136,24 +136,21 @@ export function App() {
     const [metaRes, statsRes] = await Promise.all([getMetadata(lang), getStats()]);
     setMetadata(metaRes);
     setStats(statsRes);
-    
-    // Reset conversation on language change or refresh
-    setMessages([]);
-    
+
     const q1 = await getQuestion("q1", lang);
     setQuestion(q1);
     lastQuestionId.current = q1.id;
-    
-    // Wrap in timeout to ensure React has cleared messages state
-    setTimeout(() => {
-      addMessage('header', q1.id);
-      addTutorMessage(q1.statement, true);
-    }, 0);
+
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setMessages([
+      { id: crypto.randomUUID(), role: 'header', content: q1.id, isMath: false, timestamp: ts },
+      { id: crypto.randomUUID(), role: 'tutor', content: q1.statement, isMath: true, timestamp: ts },
+    ]);
   }
 
   function addMessage(role: Message['role'], content: string, isMath = false) {
     const msg: Message = {
-      id: Math.random().toString(36),
+      id: crypto.randomUUID(),
       role,
       content,
       isMath,
