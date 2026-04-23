@@ -131,6 +131,7 @@ export function ChatComposer(props: {
   previewDiagnosis?: AttemptResponse | null;
 }) {
   const { metadata, question, selectedAnswer, inputValue, onInputChange, onSelectOption, onSubmit, isThinking, previewDiagnosis } = props;
+  const canSubmit = Boolean(inputValue || selectedAnswer);
 
   return (
     <div className="composer">
@@ -177,10 +178,12 @@ export function ChatComposer(props: {
           placeholder={translate(metadata, "select_prompt")}
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
+          onKeyDown={(e) => e.key === 'Enter' && canSubmit && onSubmit()}
         />
         <button 
           className={`icon-btn ${inputValue || selectedAnswer ? 'icon-btn-primary' : ''}`}
+          aria-label={translate(metadata, "submit_answer")}
+          disabled={!canSubmit}
           onClick={onSubmit}
         >
           ➔
@@ -223,4 +226,3 @@ export function MasteryPanel(props: {
     </div>
   );
 }
-

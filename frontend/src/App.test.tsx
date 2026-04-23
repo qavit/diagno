@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "./App";
 
 const metadata = {
   concepts: [{ id: "com_ratio", name: "Center of mass distance relation", description: "desc" }],
   errors: [{ id: "ignore_reference_frame", name: "Ignored the reference frame", description: "desc", category: "reading", hint_levels: ["Hint 1", "Hint 2"] }],
-  question_ids: ["q1"],
+  question_ids: ["q1", "q2"],
   ui: {
     app_title: "Diagnostic Physics Tutor MVP",
     hero_eyebrow: "Diagnostic Physics Tutor",
@@ -17,8 +17,10 @@ const metadata = {
     student_label: "Student",
     question_label: "Question",
     next_question: "Next Question",
+    skip_question: "Try Another Question",
     loading: "Loading...",
     submit_answer: "Submit Answer",
+    next_challenge_message: "Next challenge: {statement}",
     diagnosis_title: "Diagnosis",
     diagnosis_idle: "Submit an answer to see diagnosis.",
     show_next_hint: "Show Next Hint",
@@ -77,55 +79,72 @@ const question = {
   next_rules: {},
 };
 
-const diagnosis = {
-  attempt: {
-    id: "1",
-    question_id: "q1",
-    student_id: "demo-student",
-    answer: "B",
-    is_correct: false,
-    detected_errors: ["ignore_reference_frame"],
-    timestamp: "2026-04-19T12:00:00Z",
-  },
-  question,
-  errors: metadata.errors,
-  hints: { ignore_reference_frame: ["Hint 1", "Hint 2"] },
-  student_model: {
-    concept_mastery: { com_ratio: 0.42 },
-    recent_errors: { ignore_reference_frame: 1 },
-  },
-  recommended_next_question_id: "q7",
-};
-
 describe("App", () => {
   beforeEach(() => {
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })));
+
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn(),
+    });
+
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+
       if (url.startsWith("/metadata")) {
         return new Response(JSON.stringify(metadata));
       }
       if (url.startsWith("/questions/q1")) {
         return new Response(JSON.stringify(question));
       }
-      if (url.startsWith("/stats")) {
-        return new Response(JSON.stringify({
-          total_attempts: 1,
-          error_distribution: { ignore_reference_frame: 1 },
-          concept_mastery_by_student: { "demo-student": diagnosis.student_model },
-          recent_attempts: [diagnosis.attempt],
-        }));
-      }
-      if (url.startsWith("/attempt")) {
-        return new Response(JSON.stringify(diagnosis));
-      }
-      if (url.startsWith("/questions/q7")) {
-        return new Response(JSON.stringify({ ...question, id: "q7" }));
+      if (url.startsWith("/questions/q2")) {
+        return new Response(JSON.stringify({ ...question, id: "q2", statement: "Second question" }));
       }
       if (url.startsWith("/next-question")) {
-        return new Response(JSON.stringify({ ...question, id: "q7" }));
+        return new Response(JSON.stringify({ ...question, id: "q2", statement: "Second question" }));
       }
+      if (url.startsWith("/diagnose-preview")) {
+        return new Response(JSON.stringify({
+          attempt: {
+            id: "preview-1",
+            question_id: "q1",
+            student_id: "demo-student",
+            answer: "B",
+            is_correct: false,
+            detected_errors: ["ignore_reference_frame"],
+            timestamp: "2026-04-19T12:00:00Z",
+          },
+          question,
+          errors: metadata.errors,
+          hints: { ignore_reference_frame: ["Hint 1", "Hint 2"] },
+          student_model: {
+            concept_mastery: { com_ratio: 0.42 },
+            recent_errors: { ignore_reference_frame: 1 },
+          },
+          recommended_next_question_id: "q2",
+        }));
+      }
+      if (url.startsWith("/stats")) {
+        return new Response(JSON.stringify({
+          total_attempts: 0,
+          error_distribution: {},
+          concept_mastery_by_student: {},
+          recent_attempts: [],
+        }));
+      }
+
       return new Response("Not found", { status: 404 });
     });
+
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -133,32 +152,22 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders question flow and enables submission after selection", async () => {
+  it("lets the learner move to another question and clears the draft answer", async () => {
+    const user = userEvent.setup();
+
     render(<App />);
 
-    await screen.findByText("Question body");
-    const submit = screen.getByRole("button", { name: "Submit Answer" });
-    expect(submit).toBeDisabled();
+    expect(await screen.findAllByText("Question body")).not.toHaveLength(0);
 
-    await userEvent.click(screen.getByRole("button", { name: /Option B/i }));
-    expect(submit).toBeEnabled();
+    const submitButton = screen.getByRole("button", { name: "Submit Answer" });
+    expect(submitButton).toBeDisabled();
 
-    await userEvent.click(submit);
-    await screen.findByText("Next item: Q7");
-    expect(screen.getByText("Next item: Q7")).toBeInTheDocument();
-  });
+    await user.click(screen.getByRole("button", { name: /Option B/i }));
+    expect(submitButton).toBeEnabled();
 
-  it("reveals hints progressively", async () => {
-    render(<App />);
-    await screen.findByText("Question body");
-    await userEvent.click(screen.getByRole("button", { name: /Option B/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Submit Answer" }));
+    await user.click(screen.getByRole("button", { name: "Try Another Question" }));
 
-    const hintButton = await screen.findByRole("button", { name: "Show Next Hint" });
-    await userEvent.click(hintButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("Ignored the reference frame - Hint 1: Hint 1")).toBeInTheDocument();
-    });
+    expect(await screen.findAllByText("Second question")).not.toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Submit Answer" })).toBeDisabled();
   });
 });

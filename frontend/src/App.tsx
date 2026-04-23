@@ -24,6 +24,7 @@ export function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [isChangingQuestion, setIsChangingQuestion] = useState(false);
   const [previewDiagnosis, setPreviewDiagnosis] = useState<AttemptResponse | null>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   
@@ -110,6 +111,7 @@ export function App() {
       return;
     }
 
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setIsThinking(true);
       try {
@@ -118,13 +120,20 @@ export function App() {
           student_id: studentId, 
           answer: finalAnswer 
         }, lang));
-        setPreviewDiagnosis(res);
+        if (!cancelled) {
+          setPreviewDiagnosis(res);
+        }
       } finally {
-        setIsThinking(false);
+        if (!cancelled) {
+          setIsThinking(false);
+        }
       }
     }, 800); // 800ms debounce
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [inputValue, selectedAnswer, question, studentId, lang]);
 
   useEffect(() => {
@@ -132,20 +141,36 @@ export function App() {
     void loadInitialData();
   }, [lang]);
 
+  function resetComposerState() {
+    setInputValue("");
+    setSelectedAnswer(null);
+    setPreviewDiagnosis(null);
+  }
+
+  function appendQuestionToFeed(
+    nextQuestion: Question,
+    content: string,
+    options?: { replaceHistory?: boolean },
+  ) {
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const nextMessages: Message[] = [
+      { id: crypto.randomUUID(), role: 'header', content: nextQuestion.id, timestamp: ts },
+      { id: crypto.randomUUID(), role: 'tutor', content, isMath: true, timestamp: ts },
+    ];
+
+    setQuestion(nextQuestion);
+    lastQuestionId.current = nextQuestion.id;
+    resetComposerState();
+    setMessages((prev) => options?.replaceHistory ? nextMessages : [...prev, ...nextMessages]);
+  }
+
   async function loadInitialData() {
     const [metaRes, statsRes] = await Promise.all([getMetadata(lang), getStats()]);
     setMetadata(metaRes);
     setStats(statsRes);
 
     const q1 = await getQuestion("q1", lang);
-    setQuestion(q1);
-    lastQuestionId.current = q1.id;
-
-    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setMessages([
-      { id: crypto.randomUUID(), role: 'header', content: q1.id, isMath: false, timestamp: ts },
-      { id: crypto.randomUUID(), role: 'tutor', content: q1.statement, isMath: true, timestamp: ts },
-    ]);
+    appendQuestionToFeed(q1, q1.statement, { replaceHistory: true });
   }
 
   function addMessage(role: Message['role'], content: string, isMath = false) {
@@ -194,11 +219,11 @@ export function App() {
       // Recommended next question
       if (res.recommended_next_question_id && res.recommended_next_question_id !== lastQuestionId.current) {
         const nextQ = await getQuestion(res.recommended_next_question_id, lang);
-        setQuestion(nextQ);
-        lastQuestionId.current = nextQ.id;
         setTimeout(() => {
-          addMessage('header', nextQ.id);
-          addTutorMessage(`Next challenge: ${nextQ.statement}`, true);
+          appendQuestionToFeed(
+            nextQ,
+            translate(metadata, "next_challenge_message", { statement: nextQ.statement }),
+          );
         }, 1000);
       }
       
@@ -206,6 +231,21 @@ export function App() {
       setStats(latestStats);
     } finally {
       setIsThinking(false);
+    }
+  }
+
+  async function handleSkipQuestion() {
+    if (!question || isChangingQuestion) return;
+
+    setIsChangingQuestion(true);
+    try {
+      const nextQ = await getNextQuestion({ currentQuestionId: question.id, lang });
+      appendQuestionToFeed(
+        nextQ,
+        translate(metadata, "next_challenge_message", { statement: nextQ.statement }),
+      );
+    } finally {
+      setIsChangingQuestion(false);
     }
   }
 
@@ -260,9 +300,19 @@ export function App() {
 
         {question && (
           <div className="problem-card">
-            <h2 style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1rem' }}>
-              Current Challenge
-            </h2>
+            <div className="problem-card-header">
+              <h2 style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>
+                Current Challenge
+              </h2>
+              <button
+                className="secondary-action-btn"
+                type="button"
+                onClick={() => void handleSkipQuestion()}
+                disabled={isChangingQuestion}
+              >
+                {isChangingQuestion ? translate(metadata, "loading") : translate(metadata, "skip_question")}
+              </button>
+            </div>
             <div style={{ fontSize: '1.25rem', fontWeight: 500, color: 'var(--text-primary)' }}>
               <MathText text={question.statement} />
             </div>
@@ -347,4 +397,3 @@ export function App() {
     </div>
   );
 }
-

@@ -33,3 +33,4 @@ def test_metadata_returns_ui_translations():
 
     assert response.status_code == 200
     assert payload["ui"]["next_question"] == "下一題"
+    assert payload["ui"]["skip_question"] == "換一題試試"
